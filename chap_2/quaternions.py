@@ -81,23 +81,23 @@ class Quaternion:
         axis = axis.normalize()
         q = Quaternion(math.cos(angle / 2), angle * axis.x, angle * axis.y, angle * axis.z).normalize()
         qc = q.conjg()
-        vp = (q * v * qc).normalize()
+        vp = (q * v * qc).normalize()  # rodriquez formula
         return vp
 
 
 if __name__ == "__main__":
-    v = Quaternion(0, 0, 0, 1)
+    vertices = Quaternion(0, 0, 0, 1)
     axis = Quaternion(0, 0, 1, 0)
     angle = 2 * math.pi / 3
-    vp1 = v.rotate_vector(angle, axis)
-    vp2 = v.rotate_vector(-angle, axis)
+    vp1 = vertices.rotate_vector(angle, axis)
+    vp2 = vertices.rotate_vector(-angle, axis)
     plt.show()
     # Create a 3D plot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     # Plot the initial vector
-    ax.quiver(0, 0, 0, v.x, v.y, v.z, color='r', label='Initial Vector')
+    ax.quiver(0, 0, 0, vertices.x, vertices.y, vertices.z, color='r', label='Initial Vector')
 
     # Plot the rotated vector
     ax.quiver(0, 0, 0, vp1.x, vp1.y, vp1.z, color='b', label='Rotated Vector')
@@ -131,7 +131,6 @@ if __name__ == "__main__":
         [-0.5, 0.5, 0.5]
     ], dtype=float)
 
-    # Define the faces of the cube
     faces = [
         [vertices[j] for j in [0, 1, 2, 3]],
         [vertices[j] for j in [4, 5, 6, 7]],
@@ -140,15 +139,31 @@ if __name__ == "__main__":
         [vertices[j] for j in [1, 2, 6, 5]],
         [vertices[j] for j in [0, 3, 7, 4]]
     ]
+    vertices = np.array([[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [0, 0, 1]])
 
-    # Create a 3D plot
+    # generate list of sides' polygons of our pyramid
+    faces = [[vertices[0], vertices[1], vertices[4]], [vertices[0], vertices[3], vertices[4]],
+             [vertices[2], vertices[1], vertices[4]], [vertices[2], vertices[3], vertices[4]],
+             [vertices[0], vertices[1], vertices[2], vertices[3]]]
+
+    axis = Quaternion(0, 0, 1, 0).normalize()
+    rotated_faces = []
+    for face in faces:
+        rotated_face = []
+        for vertex in face:
+            v = Quaternion(0, vertex[0], vertex[1], vertex[2])
+            rotated_vertex = v.rotate_vector(math.pi / 8, axis).to_numpy()
+            rotated_face.append(rotated_vertex)
+        rotated_faces.append(rotated_face)
+
+    cube = Poly3DCollection(rotated_faces, facecolors='cyan', linewidths=1, edgecolors='r', alpha=.25)
+
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    cube = Poly3DCollection(faces, facecolors='cyan', linewidths=1, edgecolors='r', alpha=.25)
 
     ax.add_collection3d(cube)
+    ax.quiver(0, 0, 0, 0, 0, 1, color='r', label='Initial Vector')
 
-    # Set plot limits and labels
     ax.set_xlim([-1, 1])
     ax.set_ylim([-1, 1])
     ax.set_zlim([-1, 1])
@@ -156,9 +171,10 @@ if __name__ == "__main__":
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
+
     def update(frame):
         angle = frame * np.pi / 180
-        axis = Quaternion(0, 1, 1, 1).normalize()
+        axis = Quaternion(0, 0, 0, 1).normalize()
         rotated_faces = []
         for face in faces:
             rotated_face = []
@@ -171,6 +187,8 @@ if __name__ == "__main__":
         cube.set_verts(rotated_faces)
         return cube
 
+
     ani = FuncAnimation(fig, update, frames=np.arange(0, 360, 2), interval=50, blit=False)
-    #ani.save('rotating_cube.gif', writer=PillowWriter(fps=20))
+    # ani.save('rotating_cube.gif', writer=PillowWriter(fps=20))
     plt.show()
+print("lou est genialisime")
